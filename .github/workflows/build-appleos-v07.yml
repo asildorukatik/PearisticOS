@@ -1,0 +1,112 @@
+name: Build AppleOS v0.7
+
+on:
+  push:
+    branches:
+      - appleos-v0.7-build
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out PearisticOS
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Clone real ThanasOS source
+        run: git clone --depth 1 https://github.com/Thanas-R/Thanas-OS.git ThanasOS
+
+      - name: Verify acceptance tests are RED on upstream ThanasOS
+        shell: bash
+        run: |
+          set -euo pipefail
+          if python3 appleos-builder/test_source.py ThanasOS; then
+            echo "ERROR: acceptance test unexpectedly passed before AppleOS patch"
+            exit 1
+          fi
+          echo "RED confirmed: upstream ThanasOS does not yet contain AppleOS integration"
+
+      - name: Patch ThanasOS with AppleOS + real PearisticOS
+        run: python3 appleos-builder/patch.py ThanasOS index.html
+
+      - name: Verify acceptance tests are GREEN after patch
+        run: python3 appleos-builder/test_source.py ThanasOS
+
+      - name: Install ThanasOS dependencies
+        working-directory: ThanasOS
+        run: npm ci
+
+      - name: Build ThanasOS-based AppleOS
+        working-directory: ThanasOS
+        run: npm run build
+
+      - name: Pack complete build into one HTML
+        run: python3 appleos-builder/inline_dist.py ThanasOS/dist AppleOS-v0.7-index.html
+
+      - name: Verify final single-file build
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s AppleOS-v0.7-index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('AppleOS-v0.7-index.html')
+          text = p.read_text(encoding='utf-8')
+          assert p.stat().st_size > 20_000_000, p.stat().st_size
+          assert 'Choose your AppleOS interface' in text
+          assert 'Desktop — ThanasOS' in text
+          assert 'Mobile — PearisticOS' in text
+          assert 'PearisticOS Mobile' in text
+          assert 'Doruk' in text
+          assert 'Thanas R' not in text
+          assert not re.search(r'<script[^>]+src=["\']\.?/assets/', text)
+          assert not re.search(r'<link[^>]+href=["\']\.?/assets/', text)
+          print(f'Final single HTML verified: {p.stat().st_size:,} bytes')
+          PY
+
+      - name: Package patched source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf ThanasOS/node_modules ThanasOS/dist ThanasOS/.git
+          mkdir -p AppleOS-v0.7-source
+          mv ThanasOS AppleOS-v0.7-source/ThanasOS
+          cp index.html AppleOS-v0.7-source/PearisticOS-index.html
+          cp -a appleos-builder AppleOS-v0.7-source/appleos-builder
+          cat > AppleOS-v0.7-source/README.txt <<'EOF'
+          AppleOS v0.7 source package
+
+          Desktop base: ThanasOS (MIT) — included under ./ThanasOS and patched rather than reimplemented.
+          Mobile base: PearisticOS — the repository's original index.html is included as ./PearisticOS-index.html and embedded into the AppleOS build.
+
+          AppleOS changes:
+          - Boot-time Desktop/Mobile chooser
+          - Fullscreen request on mode selection
+          - Desktop uses ThanasOS Desktop and its original window manager/Dock/apps
+          - Mobile uses the real PearisticOS index.html
+          - ThanasOS Settings Apple Account owner changed to Doruk
+          - Single-file build configuration for double-click testing
+
+          ThanasOS's original MIT LICENSE is retained in ./ThanasOS/LICENSE.
+          EOF
+          zip -qr AppleOS-v0.7-source.zip AppleOS-v0.7-source
+
+      - name: Upload AppleOS v0.7 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppleOS-v0.7
+          compression-level: 0
+          path: |
+            AppleOS-v0.7-index.html
+            AppleOS-v0.7-source.zip
