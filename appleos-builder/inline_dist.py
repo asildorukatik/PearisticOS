@@ -22,7 +22,8 @@ def attrs_dict(raw: str) -> dict[str, str]:
 
 def is_external(url: str) -> bool:
     value = url.strip().lower()
-    return value.startswith(("http://", "https://", "data:", "blob:", "//", "#"))
+    decoded = unquote(value)
+    return value.startswith(("http://", "https://", "data:", "blob:", "//")) or decoded.startswith("#")
 
 
 def resolve_asset(dist: Path, url: str, base_dir: Path | None = None) -> Path:
