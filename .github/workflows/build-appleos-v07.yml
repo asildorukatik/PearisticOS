@@ -23,6 +23,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Verify single-file packer regression tests
+        run: python3 appleos-builder/test_inline_dist.py
+
       - name: Clone real ThanasOS source
         run: git clone --depth 1 https://github.com/Thanas-R/Thanas-OS.git ThanasOS
 
@@ -37,7 +40,9 @@ jobs:
           echo "RED confirmed: upstream ThanasOS does not yet contain AppleOS integration"
 
       - name: Patch ThanasOS with AppleOS + real PearisticOS
-        run: python3 appleos-builder/patch.py ThanasOS index.html
+        run: |
+          python3 appleos-builder/patch.py ThanasOS index.html
+          python3 appleos-builder/patch_branding.py ThanasOS
 
       - name: Verify acceptance tests are GREEN after patch
         run: python3 appleos-builder/test_source.py ThanasOS
@@ -66,12 +71,11 @@ jobs:
           text = p.read_text(encoding='utf-8')
           size = p.stat().st_size
 
-          # Source identity and behavior were verified before compilation by
-          # test_source.py. These checks verify the final file:// artifact.
           assert size > 20_000_000, size
           assert re.search(r'<script\s+type=["\']module["\']>', text)
           assert not re.search(r'<script[^>]+src=["\']\.?/assets/', text)
           assert not re.search(r'<link[^>]+href=["\']\.?/assets/', text)
+          assert 'AppleOS' in text
           print(f'Final single HTML structurally verified: {size:,} bytes')
           PY
 
@@ -87,16 +91,18 @@ jobs:
           cat > AppleOS-v0.7-source/README.txt <<'EOF'
           AppleOS v0.7 source package
 
-          Desktop base: ThanasOS (MIT) — included under ./ThanasOS and patched rather than reimplemented.
-          Mobile base: PearisticOS — the repository's original index.html is included as ./PearisticOS-index.html and embedded into the AppleOS build.
+          Desktop base: real ThanasOS source (MIT), included and patched rather than reimplemented.
+          Mobile base: real PearisticOS source, embedded from this repository's index.html.
 
           AppleOS changes:
-          - Boot-time Desktop/Mobile chooser
+          - Boot-time Desktop/Mobile chooser on every load
           - Fullscreen request on mode selection
-          - Desktop uses ThanasOS Desktop and its original window manager/Dock/apps
-          - Mobile uses the real PearisticOS index.html
-          - ThanasOS Settings Apple Account owner changed to Doruk
-          - Single-file build configuration for double-click testing
+          - Desktop preserves ThanasOS Desktop, window manager, Dock, Control Center, Spotlight and apps
+          - Mobile runs the real PearisticOS index.html
+          - ThanasOS Settings account owner changed to Doruk
+          - User-supplied Apple icon replaces the top-left ThanasOS turtle menu icon
+          - Spring-like AppleOS boot/mode animations inspired by macos.vercel.app while preserving ThanasOS Dock/window motion
+          - Offline single-file build for double-click Windows testing
 
           ThanasOS's original MIT LICENSE is retained in ./ThanasOS/LICENSE.
           EOF
