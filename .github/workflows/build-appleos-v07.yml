@@ -61,18 +61,18 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
+
           p = Path('AppleOS-v0.7-index.html')
           text = p.read_text(encoding='utf-8')
-          assert p.stat().st_size > 20_000_000, p.stat().st_size
-          assert 'Choose your AppleOS interface' in text
-          assert 'Desktop — ThanasOS' in text
-          assert 'Mobile — PearisticOS' in text
-          assert 'PearisticOS Mobile' in text
-          assert 'Doruk' in text
-          assert 'Thanas R' not in text
+          size = p.stat().st_size
+
+          # Source identity and behavior were verified before compilation by
+          # test_source.py. These checks verify the final file:// artifact.
+          assert size > 20_000_000, size
+          assert re.search(r'<script\s+type=["\']module["\']>', text)
           assert not re.search(r'<script[^>]+src=["\']\.?/assets/', text)
           assert not re.search(r'<link[^>]+href=["\']\.?/assets/', text)
-          print(f'Final single HTML verified: {p.stat().st_size:,} bytes')
+          print(f'Final single HTML structurally verified: {size:,} bytes')
           PY
 
       - name: Package patched source tree
