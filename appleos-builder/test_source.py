@@ -21,6 +21,8 @@ def main() -> None:
     boot_path = root / "src/components/appleos/AppleOSBoot.tsx"
     mobile_path = root / "src/components/appleos/PearisticMobile.tsx"
     pearistic_path = root / "src/appleos/pearistic.html"
+    logo_path = root / "src/assets/appleos-apple-logo.png"
+    menu_path = root / "src/components/macos/MenuBar.tsx"
 
     require(boot_path.exists(), "AppleOSBoot.tsx is missing")
     require(mobile_path.exists(), "PearisticMobile.tsx is missing")
@@ -28,6 +30,7 @@ def main() -> None:
 
     boot = boot_path.read_text(encoding="utf-8")
     mobile = mobile_path.read_text(encoding="utf-8")
+    menu = menu_path.read_text(encoding="utf-8")
 
     require("AppleOSBoot" in index, "Index.tsx does not use AppleOSBoot")
     require("PearisticMobile" in index, "Index.tsx does not use PearisticMobile")
@@ -41,6 +44,14 @@ def main() -> None:
     require("Thanas R" not in settings, "Thanas R is still shown as Apple Account owner")
     require("thanas5.rd@gmail.com" not in settings, "upstream owner email is still shown")
     require("Thanas's" not in settings, "upstream owner device names remain in Apple Account")
+
+    require(logo_path.exists(), "user-supplied Apple logo was not installed into ThanasOS")
+    require(logo_path.stat().st_size > 50_000, "Apple logo payload is unexpectedly small")
+    require("appleos-apple-logo.png" in menu, "menu bar does not import the user Apple logo")
+    require('alt="Apple"' in menu, "top-left Apple icon markup was not patched")
+    require("appleos-boot-card" in boot, "AppleOS boot motion class is missing")
+    require("appleos-mode-card" in boot, "AppleOS mode-card motion class is missing")
+    require("cubic-bezier" in boot, "macOS-style motion curve is missing")
 
     require("assetsInlineLimit" in vite, "Vite is not configured to inline binary assets")
     require("inlineDynamicImports" in vite, "Vite is not configured for a single JS bundle")
