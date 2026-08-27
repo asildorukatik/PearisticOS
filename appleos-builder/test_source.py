@@ -19,6 +19,7 @@ def main() -> None:
     vite = (root / "vite.config.ts").read_text(encoding="utf-8")
 
     boot_path = root / "src/components/appleos/AppleOSBoot.tsx"
+    motion_path = root / "src/components/appleos/appleos-motion.css"
     mobile_path = root / "src/components/appleos/PearisticMobile.tsx"
     pearistic_path = root / "src/appleos/pearistic.html"
     logo_path = root / "src/assets/appleos-apple-logo.png"
@@ -46,12 +47,15 @@ def main() -> None:
     require("Thanas's" not in settings, "upstream owner device names remain in Apple Account")
 
     require(logo_path.exists(), "user-supplied Apple logo was not installed into ThanasOS")
-    require(logo_path.stat().st_size > 50_000, "Apple logo payload is unexpectedly small")
+    require(logo_path.stat().st_size > 3_000, "optimized Apple logo payload is unexpectedly small")
     require("appleos-apple-logo.png" in menu, "menu bar does not import the user Apple logo")
     require('alt="Apple"' in menu, "top-left Apple icon markup was not patched")
     require("appleos-boot-card" in boot, "AppleOS boot motion class is missing")
     require("appleos-mode-card" in boot, "AppleOS mode-card motion class is missing")
-    require("cubic-bezier" in boot, "macOS-style motion curve is missing")
+    require(motion_path.exists(), "AppleOS motion stylesheet is missing")
+    motion = motion_path.read_text(encoding="utf-8")
+    require("cubic-bezier(.16,1,.3,1)" in motion, "macOS-style motion curve is missing")
+    require("prefers-reduced-motion" in motion, "motion layer lacks reduced-motion support")
 
     require("assetsInlineLimit" in vite, "Vite is not configured to inline binary assets")
     require("inlineDynamicImports" in vite, "Vite is not configured for a single JS bundle")
