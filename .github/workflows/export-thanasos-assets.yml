@@ -1,0 +1,41 @@
+name: Export ThanasOS assets for AppleOS v0.9
+
+on:
+  push:
+    branches:
+      - appleos-v0.7-build
+    paths:
+      - '.github/workflows/export-thanasos-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone ThanasOS
+        run: git clone --depth 1 https://github.com/Thanas-R/Thanas-OS.git ThanasOS
+
+      - name: Collect selected assets
+        run: |
+          set -euo pipefail
+          mkdir -p export/icons export/wallpapers
+          cp ThanasOS/src/assets/finder-icon.png export/icons/
+          cp ThanasOS/src/assets/launchpad-icon.png export/icons/
+          cp ThanasOS/src/assets/safari-icon.png export/icons/
+          cp ThanasOS/src/assets/notes-icon.png export/icons/
+          cp ThanasOS/src/assets/apple-music-icon.png export/icons/
+          cp ThanasOS/src/assets/settings-icon.png export/icons/
+          cp ThanasOS/src/assets/trash-icon.png export/icons/
+          cp ThanasOS/src/assets/control-centre.svg export/icons/
+          cp ThanasOS/src/assets/wallpaper-1.jpg export/wallpapers/
+          printf '%s\n' 'Assets copied from Thanas-R/Thanas-OS (MIT) for AppleOS v0.9 adaptation.' > export/README.txt
+
+      - name: Upload selected assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: thanasos-assets-v09
+          path: export
+          if-no-files-found: error
