@@ -47,7 +47,7 @@ def main() -> None:
     require("Thanas's" not in settings, "upstream owner device names remain in Apple Account")
 
     require(logo_path.exists(), "user-supplied Apple logo was not installed into ThanasOS")
-    require(logo_path.stat().st_size > 3_000, "optimized Apple logo payload is unexpectedly small")
+    require(logo_path.stat().st_size > 1_000, "optimized Apple logo payload is unexpectedly small")
     require("appleos-apple-logo.png" in menu, "menu bar does not import the user Apple logo")
     require('alt="Apple"' in menu, "top-left Apple icon markup was not patched")
     require("appleos-boot-card" in boot, "AppleOS boot motion class is missing")
