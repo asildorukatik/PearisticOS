@@ -59,6 +59,16 @@ class InlineDistTests(unittest.TestCase):
         self.assertIn("https://example.com/x.css", text)
         self.assertIn("data:image/png;base64,AA==", text)
 
+    def test_keeps_percent_encoded_svg_fragment_url(self):
+        temp, root = self.make_dist('<link href="./assets/app.css" rel="stylesheet">')
+        self.addCleanup(temp.cleanup)
+        (root / "assets/app.css").write_text('.masked{clip-path:url(%23clip)}', encoding="utf-8")
+
+        proc, output = self.pack(root)
+        self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+        text = output.read_text(encoding="utf-8")
+        self.assertIn("url(%23clip)", text)
+
 
 if __name__ == "__main__":
     unittest.main()
