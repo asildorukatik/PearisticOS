@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=AppleOS
+Comment=Open AppleOS as a fullscreen desktop-style app
+Exec=@APPLEOS_RUNNER@
+Icon=@APPLEOS_ICON@
+Terminal=false
+Categories=Utility;System;
+StartupNotify=true
+StartupWMClass=AppleOS
