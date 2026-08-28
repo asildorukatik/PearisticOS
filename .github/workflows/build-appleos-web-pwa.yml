@@ -29,6 +29,19 @@ jobs:
       - name: Prepare AppleOS PWA and patch ThanasOS
         run: python3 appleos-web/build_web.py prepare ThanasOS index.html AppleOS-Web
 
+      - name: Force image assets external for deterministic post-build assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('ThanasOS/vite.config.ts')
+          text = p.read_text()
+          if 'assetsInlineLimit: 0' not in text:
+              text = text.replace("  base: './',\n", "  base: './',\n  build: { assetsInlineLimit: 0 },\n", 1)
+          p.write_text(text)
+          PY
+
       - name: Verify patched ThanasOS source
         shell: bash
         run: |
@@ -45,6 +58,7 @@ jobs:
           assert 'alt="Apple"' in menu
           assert 'AppleOSMath' in dock and 'cosineMagnification01' in dock
           assert "base: './'" in vite
+          assert 'assetsInlineLimit: 0' in vite
           assert 'const detectIsMobile = () => false;' in page
           assert 'AppleOS PWA spring motion' in css
           print('Patched ThanasOS source acceptance: PASS')
@@ -76,7 +90,7 @@ jobs:
             -o AppleOS-Web/assets/wasm/appleos_math.wasm \
             appleos-web/wasm/appleos_math.c
 
-      - name: Generate PWA icon sizes
+      - name: Generate temporary valid PWA icon sizes
         shell: bash
         run: |
           set -euo pipefail
@@ -84,8 +98,9 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y imagemagick
           fi
-          convert AppleOS-Web/assets/icons/apple-logo-128.png -resize 192x192 AppleOS-Web/assets/icons/apple-logo-192.png
-          convert AppleOS-Web/assets/icons/apple-logo-128.png -resize 512x512 AppleOS-Web/assets/icons/apple-logo-512.png
+          convert ThanasOS/src/assets/turtle-logo.png -resize 128x128 AppleOS-Web/assets/icons/apple-logo-128.png
+          convert ThanasOS/src/assets/turtle-logo.png -resize 192x192 AppleOS-Web/assets/icons/apple-logo-192.png
+          convert ThanasOS/src/assets/turtle-logo.png -resize 512x512 AppleOS-Web/assets/icons/apple-logo-512.png
 
       - name: Verify WASM instantiates
         shell: bash
