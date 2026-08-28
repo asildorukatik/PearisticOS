@@ -1,0 +1,20 @@
+name: Build AppleOS Web PWA
+
+on:
+  push:
+    branches:
+      - appleos-web-pwa
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  red-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Structural acceptance must fail before implementation
+        run: python3 appleos-web/test_web_pwa.py AppleOS-Web
+      - name: Bridge acceptance must fail before implementation
+        run: python3 -m unittest appleos-web/test_bridge.py -v
