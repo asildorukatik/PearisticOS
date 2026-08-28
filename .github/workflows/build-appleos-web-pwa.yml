@@ -10,11 +10,127 @@ permissions:
   contents: read
 
 jobs:
-  red-tests:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Structural acceptance must fail before implementation
-        run: python3 appleos-web/test_web_pwa.py AppleOS-Web
-      - name: Bridge acceptance must fail before implementation
+      - name: Check out PearisticOS
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Clone real ThanasOS source
+        run: git clone --depth 1 https://github.com/Thanas-R/Thanas-OS.git ThanasOS
+
+      - name: Prepare AppleOS PWA and patch ThanasOS
+        run: python3 appleos-web/build_web.py prepare ThanasOS index.html AppleOS-Web
+
+      - name: Verify patched ThanasOS source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path('ThanasOS')
+          menu = (root/'src/components/macos/MenuBar.tsx').read_text()
+          dock = (root/'src/components/macos/Dock.tsx').read_text()
+          vite = (root/'vite.config.ts').read_text()
+          page = (root/'src/pages/Index.tsx').read_text()
+          css = (root/'src/index.css').read_text()
+          assert 'appleos-apple-logo.png' in menu
+          assert 'alt="Apple"' in menu
+          assert 'AppleOSMath' in dock and 'cosineMagnification01' in dock
+          assert "base: './'" in vite
+          assert 'const detectIsMobile = () => false;' in page
+          assert 'AppleOS PWA spring motion' in css
+          print('Patched ThanasOS source acceptance: PASS')
+          PY
+
+      - name: Run elementary bridge tests
         run: python3 -m unittest appleos-web/test_bridge.py -v
+
+      - name: Install ThanasOS dependencies
+        working-directory: ThanasOS
+        run: npm ci
+
+      - name: Build real ThanasOS Desktop
+        working-directory: ThanasOS
+        run: npm run build
+
+      - name: Install Desktop build into PWA
+        run: python3 appleos-web/build_web.py finalize ThanasOS AppleOS-Web
+
+      - name: Compile AppleOS WebAssembly math
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang --target=wasm32 -O3 -nostdlib \
+            -Wl,--no-entry \
+            -Wl,--export=cosine_magnification01 \
+            -Wl,--export=spring_step \
+            -Wl,--strip-all \
+            -o AppleOS-Web/assets/wasm/appleos_math.wasm \
+            appleos-web/wasm/appleos_math.c
+
+      - name: Generate PWA icon sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v convert >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y imagemagick
+          fi
+          convert AppleOS-Web/assets/icons/apple-logo-128.png -resize 192x192 AppleOS-Web/assets/icons/apple-logo-192.png
+          convert AppleOS-Web/assets/icons/apple-logo-128.png -resize 512x512 AppleOS-Web/assets/icons/apple-logo-512.png
+
+      - name: Verify WASM instantiates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const bytes = fs.readFileSync('AppleOS-Web/assets/wasm/appleos_math.wasm');
+          WebAssembly.instantiate(bytes, {}).then(({instance}) => {
+            const f = instance.exports.cosine_magnification01;
+            const s = instance.exports.spring_step;
+            if (typeof f !== 'function' || typeof s !== 'function') throw new Error('missing exports');
+            const mid = f(0.5);
+            if (!(mid > 0.95 && mid <= 1.0)) throw new Error(`bad cosine output ${mid}`);
+            console.log('WASM acceptance: PASS', { mid });
+          });
+          NODE
+
+      - name: Verify final Web PWA structure
+        run: python3 appleos-web/test_web_pwa.py AppleOS-Web
+
+      - name: Verify non-monolithic lazy loading
+        shell: bash
+        run: |
+          set -euo pipefail
+          test $(stat -c%s AppleOS-Web/index.html) -lt 180000
+          test $(stat -c%s AppleOS-Web/mobile/index.html) -gt 20000000
+          test -d AppleOS-Web/desktop/assets
+          test $(find AppleOS-Web/desktop/assets -maxdepth 1 -type f | wc -l) -ge 2
+          ! grep -q 'srcDoc' AppleOS-Web/index.html
+          ! grep -q 'data:text/html' AppleOS-Web/index.html
+          echo 'Lazy-loading acceptance: PASS'
+
+      - name: Package AppleOS Web PWA
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x AppleOS-Web/bridge/install-bridge.sh AppleOS-Web/bridge/appleos_bridge.py AppleOS-Web/scripts/*.sh
+          zip -qr AppleOS-Web-PWA.zip AppleOS-Web
+          unzip -t AppleOS-Web-PWA.zip >/dev/null
+          echo "Package size: $(du -h AppleOS-Web-PWA.zip | cut -f1)"
+
+      - name: Upload AppleOS Web PWA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppleOS-Web-PWA
+          compression-level: 0
+          path: AppleOS-Web-PWA.zip
