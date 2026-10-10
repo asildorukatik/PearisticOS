@@ -1,0 +1,242 @@
+
+/* PearisticOS 27 — original web interpretation of Apple's Liquid Glass design.
+   Only navigation/control surfaces receive the glass material. App content
+   stays readable and flat. iOS17 logic, data and icon artwork are preserved. */
+:root {
+  --pear27-glass-alpha:.60;
+  --pear27-glass-blur:27px;
+  --pear27-glass-sat:1.7;
+  --pear27-glass-edge:rgba(255,255,255,.46);
+  --pear27-ink:#161b2b;
+  --pear27-cobalt:#247bff;
+  --pear27-shadow:0 14px 46px rgba(8,21,56,.24),0 2px 7px rgba(3,9,23,.12);
+  --pear27-spring:cubic-bezier(.18,.86,.20,1);
+}
+:root[data-theme="dark"]{
+  --pear27-ink:#f8fbff;
+  --pear27-glass-alpha:.48;
+  --pear27-glass-edge:rgba(255,255,255,.25);
+  --pear27-shadow:0 15px 50px rgba(0,0,0,.46),0 2px 8px rgba(0,0,0,.24);
+}
+html,body,#os{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif}
+#home { isolation:isolate; }
+#home::before {
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 12% 3%,rgba(251,255,255,.25),transparent 45%),
+     radial-gradient(ellipse at 86% 82%,rgba(120,220,255,.17),transparent 43%);
+  mix-blend-mode:screen;
+}
+#home > *{z-index:1}
+/* Persistent status / navigation material */
+#home .statusbar { padding-top:max(10px,env(safe-area-inset-top)) !important; }
+#home .status-cluster{
+  background:linear-gradient(130deg,rgba(255,255,255,.22),rgba(255,255,255,.08) 42%,rgba(18,39,79,.16)),rgba(40,80,135,.20) !important;
+  border:1px solid rgba(255,255,255,.41) !important;
+  box-shadow:inset 0 1.4px rgba(255,255,255,.55),0 5px 24px rgba(0,22,66,.16) !important;
+  backdrop-filter:blur(22px) saturate(170%) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(170%) !important;
+  border-radius:30px!important;min-height:37px;
+}
+#home .status-clock{font-variant-numeric:tabular-nums;letter-spacing:-.025em}
+#home .status-btn {
+  background:linear-gradient(155deg,rgba(255,255,255,.34),rgba(245,249,255,.10))!important;
+  border:1px solid rgba(255,255,255,.42)!important;
+  backdrop-filter:blur(19px) saturate(170%) !important;
+  -webkit-backdrop-filter:blur(19px) saturate(170%) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.5),0 5px 20px rgba(5,22,55,.11);
+}
+/* App tiles: layered icons, controlled glints; never change computed sizing. */
+#home .home-icon-page .app-icon{transition:transform .34s var(--pear27-spring),filter .18s ease}
+#home .home-icon-page .app-icon:active{transform:scale(.93)!important;filter:brightness(1.07)}
+#home .home-icon-page .app-tile,
+#dock.dock > .app-icon > .app-tile{
+  position:relative;overflow:hidden;isolation:isolate;
+  border:1px solid rgba(255,255,255,.39)!important;
+  border-radius:22.37%!important;
+  box-shadow:0 11px 26px rgba(3,18,58,.20),inset 0 1px rgba(255,255,255,.53)!important;
+  transform:translateZ(0)
+}
+#home .home-icon-page .app-tile:after,
+#dock.dock > .app-icon > .app-tile:after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(148deg,rgba(255,255,255,.27),rgba(255,255,255,0) 34%,rgba(255,255,255,0) 75%,rgba(255,255,255,.12));
+  box-shadow:inset 0 1.1px 1px rgba(255,255,255,.48),inset 0 -1px 1px rgba(0,0,0,.08)
+}
+#home .home-icon-page .app-name{font-weight:520!important;text-shadow:0 1px 5px rgba(0,0,0,.42)!important;letter-spacing:-.015em}
+/* The size of the Dock is still computed by the existing AutoDock JavaScript. */
+#dock.dock {
+  background:linear-gradient(145deg,
+   rgba(255,255,255,calc(var(--pear27-glass-alpha)*.53)),
+   rgba(246,251,255,calc(var(--pear27-glass-alpha)*.25)) 33%,
+   rgba(27,62,134,calc(var(--pear27-glass-alpha)*.23)) 100%)!important;
+  border:1px solid var(--pear27-glass-edge)!important;
+  border-radius:calc(var(--pear-dock-height,106px)*.29)!important;
+  backdrop-filter:blur(var(--pear27-glass-blur)) saturate(var(--pear27-glass-sat)) brightness(1.06)!important;
+  -webkit-backdrop-filter:blur(var(--pear27-glass-blur)) saturate(var(--pear27-glass-sat)) brightness(1.06)!important;
+  box-shadow:var(--pear27-shadow),inset 0 1.7px 1px rgba(255,255,255,.72),inset 0 -1.5px 4px rgba(5,24,64,.11)!important;
+  isolation:isolate; /* preserve original dynamic width and icon dimensions */
+}
+#dock.dock:before {content:"";position:absolute;top:0;left:6%;right:6%;height:37%;border-radius:0 0 999px 999px;
+ background:linear-gradient(to bottom,rgba(255,255,255,.20),transparent);pointer-events:none;z-index:0}
+#dock.dock > .app-icon{position:relative;z-index:1;transition:transform .28s var(--pear27-spring)}
+#dock.dock > .app-icon:active{transform:translateY(-3px) scale(.93)!important}
+#dock.dock::after{content:"";position:absolute;left:var(--pear27-pointer-x,50%);top:-55%;width:46%;height:90%;
+ transform:translateX(-50%);pointer-events:none;opacity:.35;
+ background:radial-gradient(ellipse,rgba(255,255,255,.45),transparent 70%);filter:blur(14px)}
+#home .page-dots{gap:7px;align-items:center;border-radius:100px;padding:5px 12px;
+ background:rgba(25,42,77,.16);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(8px)}
+#home .page-dots i{width:7px;height:7px;transition:width .3s var(--pear27-spring),background .2s}
+#home .page-dots i.active{width:20px;border-radius:99px}
+/* Control Center — glass around controls, not content */
+#controlOverlay {background:rgba(3,13,38,.23)!important;backdrop-filter:blur(13px) saturate(115%)!important;-webkit-backdrop-filter:blur(13px) saturate(115%)!important}
+#controlOverlay .control-panel{
+  background:linear-gradient(149deg,rgba(252,254,255,.77),rgba(243,248,255,.61) 70%,rgba(208,224,255,.51))!important;
+  color:#15233e!important;
+  border:1px solid rgba(255,255,255,.76)!important;
+  border-radius:38px!important;
+  box-shadow:0 30px 100px rgba(2,15,45,.29),inset 0 1.5px rgba(255,255,255,.83)!important;
+  backdrop-filter:blur(var(--pear27-glass-blur)) saturate(var(--pear27-glass-sat))!important;
+  -webkit-backdrop-filter:blur(var(--pear27-glass-blur)) saturate(var(--pear27-glass-sat))!important;
+  overflow-y:auto!important;
+  scrollbar-width:none;
+}
+#controlOverlay .control-panel::-webkit-scrollbar{display:none}
+#controlOverlay .cc-title{font-weight:760;font-size:clamp(23px,3vw,34px);letter-spacing:-.055em;margin:1px 0 20px 4px;color:#172746}
+#controlOverlay .cc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+#controlOverlay .cc-btn{
+  border:1px solid rgba(255,255,255,.73)!important;
+  border-radius:26px!important;
+  background:linear-gradient(155deg,rgba(255,255,255,.83),rgba(228,239,255,.40))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.96),0 7px 18px rgba(40,75,130,.10)!important;
+  backdrop-filter:blur(9px) saturate(180%);
+  position:relative;transition:transform .28s var(--pear27-spring),box-shadow .2s,border-color .2s;
+}
+#controlOverlay .cc-btn.on{
+  background:linear-gradient(160deg,#63a8ff,#2a7dff 65%,#1462e9)!important;
+  border-color:rgba(255,255,255,.45)!important;
+  box-shadow:inset 0 1.5px rgba(255,255,255,.56),0 8px 24px rgba(34,107,237,.29)!important;
+}
+#controlOverlay .cc-btn.airplane.on{background:linear-gradient(145deg,#ffb04d,#f98b00)!important}
+#controlOverlay .cc-btn.battery.on{background:linear-gradient(145deg,#fff292,#ffd247)!important}
+#controlOverlay .cc-btn:active{transform:scale(.93)!important}
+#controlOverlay .slider-card{
+  background:linear-gradient(175deg,rgba(255,255,255,.88),rgba(218,233,255,.48))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.95),0 6px 24px rgba(17,72,145,.09);
+  border:1px solid rgba(255,255,255,.78)!important;border-radius:27px!important
+}
+#controlOverlay .slider-fill{background:linear-gradient(0deg,rgba(88,166,255,.55),rgba(163,210,255,.21))!important}
+#controlOverlay .mode-row{border-radius:21px!important;overflow:hidden;background:rgba(255,255,255,.52);padding:5px!important;border:1px solid rgba(255,255,255,.8)}
+#controlOverlay .mode-row button{border-radius:16px!important}
+/* Add a concise utility hint without breaking existing controls */
+#controlOverlay .cc-title::after{content:"PearisticOS 27";display:block;font-size:11px;letter-spacing:.10em;text-transform:uppercase;margin-top:4px;color:#6682a8;font-weight:650}
+/* Notification banners and covers */
+#notificationsOverlay .notifications-panel,
+#quickSearchOverlay .quick-search-panel{
+  background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(228,238,255,.66))!important;
+  color:#182641!important;border:1px solid rgba(255,255,255,.68)!important;
+  border-radius:35px!important;
+  box-shadow:var(--pear27-shadow)!important;
+  backdrop-filter:blur(28px) saturate(160%)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(160%)!important;
+}
+#notificationsOverlay .notifications-panel h2{letter-spacing:-.05em}
+.notification-banner,.notification-center-list article,.lock-notifications-inner article,.notifications-only-stack article{
+  background:linear-gradient(125deg,rgba(255,255,255,.84),rgba(232,242,255,.66))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.68),0 10px 30px rgba(10,32,65,.11)!important;
+  border:1px solid rgba(255,255,255,.52)!important;
+  border-radius:24px!important;
+  backdrop-filter:blur(18px) saturate(1.5)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.5)!important;
+}
+#homeSearchOverlay .home-search-card {
+  background:linear-gradient(160deg,rgba(252,254,255,.87),rgba(224,235,255,.68))!important;
+  border:1px solid rgba(255,255,255,.72)!important;
+  border-radius:32px!important;
+  box-shadow:var(--pear27-shadow)!important;
+  backdrop-filter:blur(30px) saturate(155%)!important;
+  -webkit-backdrop-filter:blur(30px) saturate(155%)!important;
+}
+#homeSearchOverlay .home-search-box{border-radius:20px!important;background:rgba(255,255,255,.68)!important}
+/* Windows and system app headers — non-glass content backgrounds */
+#appLayer .app-window:not([data-app="camera"]){background:#f6f7fb!important;color:#141d30!important}
+#appLayer .app-window:not([data-app="camera"]) .app-bar {
+  background:rgba(249,251,255,.92)!important;border-bottom:1px solid rgba(91,121,175,.12)!important;
+  height:63px!important;backdrop-filter:blur(15px) saturate(140%)!important;
+  -webkit-backdrop-filter:blur(15px) saturate(140%)!important;
+}
+#appLayer .app-window .app-title{letter-spacing:-.033em;font-weight:750}
+#appLayer .app-window .app-close{background:rgba(99,132,187,.1)!important}
+#appLayer .app-body>h2:first-child{font-size:clamp(29px,4vw,39px);font-weight:760;letter-spacing:-.06em;margin:0 0 20px}
+#appLayer .section-card {
+  background:rgba(255,255,255,.95)!important;
+  border:1px solid rgba(128,147,182,.10)!important;
+  border-radius:22px!important;
+  box-shadow:0 4px 19px rgba(18,39,77,.043)!important;
+  padding:17px 19px!important;
+}
+#appLayer .section-card h3{font-size:16px;letter-spacing:-.025em;color:#4c617c;margin-top:0}
+#appLayer .row{min-height:53px;border-bottom:1px solid rgba(92,120,158,.11)!important}
+#appLayer .row-label{font-weight:610;letter-spacing:-.012em}
+#appLayer .row-sub{color:#738098}
+#appLayer .app-action{background:linear-gradient(150deg,#56a4ff,#287cff)!important;border:1px solid rgba(255,255,255,.34)!important;border-radius:999px!important;box-shadow:inset 0 1px rgba(255,255,255,.30),0 3px 10px rgba(48,105,197,.13)!important;font-weight:640}
+#appLayer .app-action.secondary{background:rgba(55,87,131,.10)!important;color:#243954!important;border-color:rgba(120,160,200,.10)!important}
+#appLayer .app-input,#appLayer .app-textarea{background:#fff!important;border-color:rgba(101,135,182,.17)!important;box-shadow:inset 0 1px 2px rgba(16,36,68,.04)}
+#appLayer .switch{background:#dae0e8}
+#appLayer .switch.on{background:#34c759!important}
+#systemPopupOverlay .system-popup{border-radius:31px!important;background:rgba(248,251,255,.96)!important;box-shadow:var(--pear27-shadow)!important}
+/* Lock Screen: expansive translucent but legible hierarchy. */
+#lock .lock-time{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Rounded",system-ui,sans-serif;font-weight:570!important;letter-spacing:-.075em;line-height:1.02!important;text-shadow:0 2px 23px rgba(18,54,109,.19)!important}
+#lock .lock-date{font-weight:580;letter-spacing:-.025em}
+#lock .lock-brand{letter-spacing:.19em;font-size:11px!important;text-transform:uppercase;font-weight:710;opacity:.82}
+#lock .lock-battery {background:rgba(10,25,53,.13);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.39)!important;border-radius:100px!important}
+#lock .unlock-area{letter-spacing:.01em}
+#recentsOverlay .recents-track>*{border-radius:25px}
+/* A real iOS 27 glass clarity slider: CSS state controlled in Settings. */
+.pear27-clarity-control{display:flex;align-items:center;gap:12px;min-width:min(240px,50vw)}
+.pear27-clarity-control input[type=range]{flex:1;accent-color:#287dff;min-width:75px;height:24px;cursor:pointer}
+.pear27-clarity-control output{font-size:13px;font-weight:750;color:#49607d;min-width:34px;text-align:right}
+.pear27-version-pill{display:inline-flex;align-items:center;gap:7px;background:rgba(37,126,255,.095);border:1px solid rgba(37,126,255,.16);color:#276ddd!important;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:17px}
+.pear27-version-pill:before{content:"";width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#60cdff,#316cf9)}
+
+/* True dark appearance for the new control surfaces. */
+:root[data-theme="dark"] #appLayer .app-window:not([data-app="camera"]){background:#10141e!important;color:#f3f6ff!important}
+:root[data-theme="dark"] #appLayer .app-window:not([data-app="camera"]) .app-bar{background:rgba(20,25,39,.91)!important;border-color:rgba(255,255,255,.10)!important}
+:root[data-theme="dark"] #appLayer .section-card{background:#202636!important;border-color:rgba(255,255,255,.06)!important}
+:root[data-theme="dark"] #appLayer .section-card h3{color:#a0b4d5!important}
+:root[data-theme="dark"] #appLayer .row-sub{color:#a0adc4!important}
+:root[data-theme="dark"] #appLayer .app-input,
+:root[data-theme="dark"] #appLayer .app-textarea{background:#171e2d!important;color:#ecf2ff!important;border-color:rgba(255,255,255,.12)!important}
+:root[data-theme="dark"] #appLayer .app-action.secondary{color:#d7e7ff!important;background:rgba(114,154,215,.19)!important}
+:root[data-theme="dark"] #controlOverlay .control-panel,
+:root[data-theme="dark"] #notificationsOverlay .notifications-panel,
+:root[data-theme="dark"] #quickSearchOverlay .quick-search-panel{background:linear-gradient(160deg,rgba(38,47,69,.91),rgba(19,27,46,.84))!important;color:#f2f6ff!important;border-color:rgba(255,255,255,.22)!important}
+:root[data-theme="dark"] #controlOverlay .cc-title{color:#f4f7ff!important}
+:root[data-theme="dark"] #controlOverlay .cc-title::after{color:#a3b9da!important}
+:root[data-theme="dark"] #controlOverlay .cc-btn,
+:root[data-theme="dark"] #controlOverlay .slider-card{background:linear-gradient(145deg,rgba(69,84,115,.83),rgba(39,54,83,.73))!important;border-color:rgba(255,255,255,.18)!important}
+:root[data-theme="dark"] #controlOverlay .cc-btn.on{background:linear-gradient(160deg,#4d9eff,#1259dd)!important}
+:root[data-theme="dark"] .notification-banner,
+:root[data-theme="dark"] .notification-center-list article,
+:root[data-theme="dark"] .lock-notifications-inner article{background:linear-gradient(160deg,rgba(57,70,92,.91),rgba(27,39,62,.86))!important;color:#f3f7ff!important}
+:root[data-theme="dark"] .pear27-clarity-control output{color:#a8c7f3!important}
+
+/* Accessibility */
+:root.pear27-reduce-transparency #dock.dock,
+:root.pear27-reduce-transparency #home .status-cluster,
+:root.pear27-reduce-transparency #controlOverlay .control-panel,
+:root.pear27-reduce-transparency #notificationsOverlay .notifications-panel,
+:root.pear27-reduce-transparency #quickSearchOverlay .quick-search-panel{
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(244,249,255,.96)!important;color:#192847!important
+}
+:root.pear27-reduce-transparency #dock.dock{background:rgba(65,91,144,.95)!important}
+@media (max-width:660px){
+ #controlOverlay .control-panel{top:0!important;right:0!important;left:0!important;bottom:0!important;width:100%!important;max-width:none!important;border-radius:0!important;padding:calc(64px + env(safe-area-inset-top)) 17px max(24px,env(safe-area-inset-bottom))!important;box-sizing:border-box}
+ #controlOverlay .cc-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+ #controlOverlay .cc-bottom{gap:11px}
+ #home .page-dots{padding:5px 9px}
+ #appLayer .section-card{padding:13px 15px!important}
+ .pear27-clarity-control{min-width:130px}
+ .pear27-clarity-control output{display:none}
+}
+@media (prefers-reduced-motion:reduce){#dock.dock,#home .home-icon-page .app-icon,#controlOverlay .cc-btn{transition-duration:.01ms!important;animation:none!important}}
+

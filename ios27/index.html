@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#77cfff"><title>PearisticOS 27</title><style>html,body{margin:0;height:100%;background:#0c1938;color:white;font:16px system-ui}main{min-height:100dvh;display:grid;place-items:center;text-align:center}</style></head>
+<body><main id="loading"><div><h1>PearisticOS 27</h1><p>Starting system…</p></div></main><script>
+(async () => {
+  try {
+    const urls=['../pearistic-core.html','../pearistic-pages-patches.json','./theme.css','./theme.js'];
+    const responses=await Promise.all(urls.map(url=>fetch(url,{cache:'no-cache'})));
+    if(responses.some(r=>!r.ok)) throw new Error('Unable to load PearisticOS resources');
+    const [source,rawPatch,themeCSS,themeJS]=await Promise.all(responses.map(r=>r.text()));
+    const delta=JSON.parse(rawPatch);
+    const lines=source.match(/[^\n]*\n|[^\n]+$/g)||[];
+    for(let i=delta.edits.length-1;i>=0;i--){const e=delta.edits[i];lines.splice(e.start,e.delete,e.insert)}
+    let html=lines.join('');
+    const themeTag='<style id="pear27-theme">'+themeCSS+'</style>';
+    const fixTag='<style id="pearistic-side-page-and-panel-fix">';
+    html=html.includes(fixTag)?html.replace(fixTag,themeTag+'\n'+fixTag):html.replace('</head>',themeTag+'</head>');
+    const scriptTag='<scr'+'ipt id="pear27-behavior">'+themeJS+'</scr'+'ipt>';
+    html=html.replace('</body>',scriptTag+'</body>');
+    document.open();document.write(html);document.close();
+  } catch(error) {
+    console.error(error);
+    document.getElementById('loading').innerHTML='<div><h1>PearisticOS 27</h1><p>Unable to start. Try refreshing the page.</p></div>';
+  }
+})();
+</script></body></html>
